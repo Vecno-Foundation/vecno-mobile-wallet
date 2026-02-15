@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="description" content="A Flutter web project.">
+
+  <!-- Base href for routing -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="vecno_wallet">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Manifest for PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <title>vecno_wallet</title>
+</head>
+
+<body>
+  <script>
+    // Use Flutter's template token for service worker version
+    var serviceWorkerVersion = '{{flutter_service_worker_version}}';
+    var scriptLoaded = false;
+
+    function loadMainDartJs() {
+      if (scriptLoaded) return;
+      scriptLoaded = true;
+      var scriptTag = document.createElement('script');
+      scriptTag.src = 'main.dart.js';
+      scriptTag.type = 'application/javascript';
+      document.body.append(scriptTag);
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        var serviceWorkerUrl = 'flutter_service_worker.js?v=' + serviceWorkerVersion;
+        navigator.serviceWorker.register(serviceWorkerUrl)
+          .then((reg) => {
+            function waitForActivation(sw) {
+              sw.addEventListener('statechange', () => {
+                if (sw.state === 'activated') {
+                  console.log('Installed new service worker.');
+                  loadMainDartJs();
+                }
+              });
+            }
+
+            if (!reg.active && (reg.installing || reg.waiting)) {
+              waitForActivation(reg.installing || reg.waiting);
+            } else if (!reg.active.scriptURL.endsWith(serviceWorkerVersion)) {
+              console.log('New service worker available.');
+              reg.update();
+              waitForActivation(reg.installing);
+            } else {
+              console.log('Loading app from service worker.');
+              loadMainDartJs();
+            }
+          });
+
+        // Fallback in case service worker takes too long
+        setTimeout(() => {
+          if (!scriptLoaded) {
+            console.warn(
+              'Failed to load app from service worker. Falling back to plain <script> tag.'
+            );
+            loadMainDartJs();
+          }
+        }, 4000);
+      });
+    } else {
+      // Service workers not supported
+      loadMainDartJs();
+    }
+  </script>
+</body>
+
+</html>
